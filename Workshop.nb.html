@@ -1766,12 +1766,13 @@ pre code {
 <p><strong>Packages</strong></p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShoYXZlbilcbmxpYnJhcnkoZ2dwbG90MilcbmxpYnJhcnkoZHBseXIpXG5saWJyYXJ5KGd0KVxubGlicmFyeShwbG90bHkpXG5gYGAifQ== -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShoYXZlbilcbmxpYnJhcnkoZ2dwbG90MilcbmxpYnJhcnkoZHBseXIpXG5saWJyYXJ5KGd0KVxubGlicmFyeShwbG90bHkpXG5saWJyYXJ5KHRpZHlyKVxuYGBgIn0= -->
 <pre class="r"><code>library(haven)
 library(ggplot2)
 library(dplyr)
 library(gt)
-library(plotly)</code></pre>
+library(plotly)
+library(tidyr)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
@@ -1795,9 +1796,87 @@ View(adsl)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p><strong>define functions used</strong></p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZm10X251bSA8LSBmdW5jdGlvbih4LCBkaWdpdHMsIHdpZHRoID0gZGlnaXRzICsgNCkge1xuICBmb3JtYXRDKHgsXG4gICAgZGlnaXRzID0gZGlnaXRzLFxuICAgIGZvcm1hdCA9IFwiZlwiLFxuICAgIHdpZHRoID0gd2lkdGhcbiAgKVxufVxuYGBgIn0= -->
+<pre class="r"><code>fmt_num &lt;- function(x, digits, width = digits + 4) {
+  formatC(x,
+    digits = digits,
+    format = &quot;f&quot;,
+    width = width
+  )
+}</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
 <p><strong>Prep Data</strong></p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucG9wIDwtIGFkc2wgJT4lXG4gIGZpbHRlcihTQUZGTCA9PSBcIllcIikgJT4lXG4gIHJlbmFtZShUUlRBTiA9IFRSVDAxQU4pICU+JVxuICBjb3VudChUUlRBTiwgbmFtZSA9IFwidG90XCIpXG5cbnBvcFxuXG5gYGAifQ== -->
+<pre class="r"><code>pop &lt;- adsl %&gt;%
+  filter(SAFFL == &quot;Y&quot;) %&gt;%
+  rename(TRTAN = TRT01AN) %&gt;%
+  count(TRTAN, name = &quot;tot&quot;)
+
+pop
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p><strong>tidy_ae</strong></p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG50aWR5X2FlIDwtIGFkYWUgJT4lXG4gIG11dGF0ZShcbiAgICBhbGwgPSBTQUZGTCA9PSBcIllcIixcbiAgICBkcnVnID0gQUVSRUwgJWluJSBjKFwiUE9TU0lCTEVcIiwgXCJQUk9CQUJMRVwiKSxcbiAgICBzZXIgPSBBRVNFUiA9PSBcIllcIixcbiAgICBkcnVnX3NlciA9IGRydWcgJiBzZXIsXG4gICAgZGllID0gQUVPVVQgPT0gXCJGQVRBTFwiXG4gICkgJT4lXG4gIHNlbGVjdChVU1VCSklELCBUUlRBTiwgYWxsLCBkcnVnLCBzZXIsIGRydWdfc2VyLCBkaWUpICU+JVxuICBwaXZvdF9sb25nZXIoY29scyA9IGMoYWxsLCBkcnVnLCBzZXIsIGRydWdfc2VyLCBkaWUpKVxuXG50aWR5X2FlICU+JSBoZWFkKDQpXG5gYGAifQ== -->
+<pre class="r"><code>
+tidy_ae &lt;- adae %&gt;%
+  mutate(
+    all = SAFFL == &quot;Y&quot;,
+    drug = AEREL %in% c(&quot;POSSIBLE&quot;, &quot;PROBABLE&quot;),
+    ser = AESER == &quot;Y&quot;,
+    drug_ser = drug &amp; ser,
+    die = AEOUT == &quot;FATAL&quot;
+  ) %&gt;%
+  select(USUBJID, TRTAN, all, drug, ser, drug_ser, die) %&gt;%
+  pivot_longer(cols = c(all, drug, ser, drug_ser, die))
+
+tidy_ae %&gt;% head(4)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p><strong>We summarize the number and percentage of participants who
+meet each AE criteria.</strong></p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYW5hIDwtIHRpZHlfYWUgJT4lXG4gIGZpbHRlcih2YWx1ZSA9PSBUUlVFKSAlPiVcbiAgZ3JvdXBfYnkoVFJUQU4sIG5hbWUpICU+JVxuICBzdW1tYXJpc2UobiA9IG5fZGlzdGluY3QoVVNVQkpJRCkpICU+JVxuICBsZWZ0X2pvaW4ocG9wLCBieSA9IFwiVFJUQU5cIikgJT4lXG4gIG11dGF0ZShcbiAgICBwY3QgPSBmbXRfbnVtKG4gLyB0b3QgKiAxMDAsIGRpZ2l0cyA9IDEpLFxuICAgIG4gPSBmbXRfbnVtKG4sIGRpZ2l0cyA9IDApLFxuICAgIHBjdCA9IHBhc3RlMChcIihcIiwgcGN0LCBcIilcIilcbiAgKVxuYGBgIn0= -->
+<pre class="r"><code>ana &lt;- tidy_ae %&gt;%
+  filter(value == TRUE) %&gt;%
+  group_by(TRTAN, name) %&gt;%
+  summarise(n = n_distinct(USUBJID)) %&gt;%
+  left_join(pop, by = &quot;TRTAN&quot;) %&gt;%
+  mutate(
+    pct = fmt_num(n / tot * 100, digits = 1),
+    n = fmt_num(n, digits = 0),
+    pct = paste0(&quot;(&quot;, pct, &quot;)&quot;)
+  )</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiYHN1bW1hcmlzZSgpYCBoYXMgZ3JvdXBlZCBvdXRwdXQgYnkgJ1RSVEFOJy4gWW91IGNhbiBvdmVycmlkZSB1c2luZyB0aGUgYC5ncm91cHNgIGFyZ3VtZW50LlxuIn0= -->
+<pre><code>`summarise()` has grouped output by &#39;TRTAN&#39;. You can override using the `.groups` argument.</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYW5hICU+JSBoZWFkKDQpXG5gYGAifQ== -->
+<pre class="r"><code>ana %&gt;% head(4)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbImdyb3VwZWRfZGYiLCJ0YmxfZGYiLCJ0YmwiLCJkYXRhLmZyYW1lIl0sIm5yb3ciOjQsIm5jb2wiOjUsInN1bW1hcnkiOnsiQSB0aWJibGUiOlsiNCDDlyA1Il0sIkdyb3VwcyI6WyJUUlRBTiBbMl0iXX19LCJyZGYiOiJVa1JZTXdwWUNnQUFBQU1BQkFJQkFBTUZBQUFBQUFWVlZFWXRPQUFBQkFJQUFBQUJBQVFBQ1FBQUFBRjRBQUFERXdBQUFBVUFBQUlPQUFBQUJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUVCTEFBQUFBQUFBQUFBRUFnQUFBQUVBQkFBSkFBQUFCV3hoWW1Wc0FBQUFFQUFBQUFFQUJBQUpBQUFBRkVGamRIVmhiQ0JVY21WaGRHMWxiblFnS0U0cEFBQUEvZ0FBQUJBQUFBQUVBQVFBQ1FBQUFBTmhiR3dBQkFBSkFBQUFBMlJwWlFBRUFBa0FBQUFFWkhKMVp3QUVBQWtBQUFBRFlXeHNBQUFBRUFBQUFBUUFCQUFKQUFBQUJDQWdOamtBQkFBSkFBQUFCQ0FnSURJQUJBQUpBQUFBQkNBZ05EUUFCQUFKQUFBQUJDQWdOemNBQUFBTkFBQUFCQUFBQUZZQUFBQldBQUFBVmdBQUFGUUFBQUFRQUFBQUJBQUVBQWtBQUFBSEtDQTRNQzR5S1FBRUFBa0FBQUFIS0NBZ01pNHpLUUFFQUFrQUFBQUhLQ0ExTVM0eUtRQUVBQWtBQUFBSEtDQTVNUzQzS1FBQUJBSUFBQUFCQUFRQUNRQUFBQVZqYkdGemN3QUFBQkFBQUFBQkFBUUFDUUFBQUFwa1lYUmhMbVp5WVcxbEFBQUVBZ0FBQUFFQUJBQUpBQUFBQ1hKdmR5NXVZVzFsY3dBQUFBMEFBQUFDZ0FBQUFQLy8vL3dBQUFRQ0FBQUFBUUFFQUFrQUFBQUZibUZ0WlhNQUFBQVFBQUFBQlFBRUFBa0FBQUFGVkZKVVFVNEFCQUFKQUFBQUJHNWhiV1VBQkFBSkFBQUFBVzRBQkFBSkFBQUFBM1J2ZEFBRUFBa0FBQUFEY0dOMEFBQUEvZ0FBQkFJQUFBQUJBQVFBQ1FBQUFBZHZjSFJwYjI1ekFBQUNFd0FBQUFVQUFBQVFBQUFBQVFBRUFBa0FBQUFCY2dBQUFCQUFBQUFCQUFRQUNRQUFBQTkxYm01aGJXVmtMV05vZFc1ckxURUFBQUFLQUFBQUFRQUFBQUFBQUFBTkFBQUFBUUFBQUFRQUFBQU5BQUFBQVFBQUFBVUFBQVFDQUFBRi93QUFBQkFBQUFBRkFBUUFDUUFBQUFabGJtZHBibVVBQkFBSkFBQUFCV3hoWW1Wc0FBUUFDUUFBQUE1eWIzZHVZVzFsY3k1d2NtbHVkQUFFQUFrQUFBQUtjbTkzY3k1MGIzUmhiQUFFQUFrQUFBQUtZMjlzY3k1MGIzUmhiQUFBQVA0QUFBRCsifQ== -->
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["TRTAN"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["name"],"name":[2],"type":["chr"],"align":["left"]},{"label":["n"],"name":[3],"type":["chr"],"align":["left"]},{"label":["tot"],"name":[4],"type":["int"],"align":["right"]},{"label":["pct"],"name":[5],"type":["chr"],"align":["left"]}],"data":[{"1":"0","2":"all","3":"69","4":"86","5":"( 80.2)"},{"1":"0","2":"die","3":"2","4":"86","5":"(  2.3)"},{"1":"0","2":"drug","3":"44","4":"86","5":"( 51.2)"},{"1":"54","2":"all","3":"77","4":"84","5":"( 91.7)"}],"options":{"columns":{"min":{},"max":[10],"total":[5]},"rows":{"min":[10],"max":[10],"total":[4]},"pages":{}}}
+  </script>
+</div>
+<!-- rnb-frame-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuTkFcbk5BXG5gYGAifQ== -->
+<pre class="r"><code>NA
+NA</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p><strong>AE Data Viz</strong></p>
@@ -1818,12 +1897,24 @@ View(adsl)</code></pre>
 <!-- rnb-plot-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYWRhZV91cGRhdGUgPC0gYWRhZSAlPiVcbiBmaWx0ZXIoIShUUlRBICVpbiUgXCJYYW5vbWVsaW5lIExvdyBEb3NlXCIpKSAlPiVcbiBmaWx0ZXIoIShBRVJFTCAlaW4lIGMoXCJSRU1PVEVcIiwgXCJcIikpKSAlPiVcbiBmaWx0ZXIoVFJURU1GTCAlaW4lIFxuIFwiWVwiKSBcblxuXG5gYGAifQ== -->
+<pre class="r"><code>adae_update &lt;- adae %&gt;%
+ filter(!(TRTA %in% &quot;Xanomeline Low Dose&quot;)) %&gt;%
+ filter(!(AEREL %in% c(&quot;REMOTE&quot;, &quot;&quot;))) %&gt;%
+ filter(TRTEMFL %in% 
+ &quot;Y&quot;) 
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
 <p>Table</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-chunk-end -->
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiUiBOb3RlYm9vayIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKKipQYWNrYWdlcyoqCgpgYGB7cn0KbGlicmFyeShoYXZlbikKbGlicmFyeShnZ3Bsb3QyKQpsaWJyYXJ5KGRwbHlyKQpsaWJyYXJ5KGd0KQpsaWJyYXJ5KHBsb3RseSkKYGBgCgoqKkltcG9ydCBBREFFKioKCmBgYHtyfQphZGFlIDwtIHJlYWRfc2FzKCJodHRwczovL2dpdGh1Yi5jb20vZWxvbmcwNTI3L3I0Y3NyL3Jhdy9tYXN0ZXIvZGF0YS1hZGFtL2FkYWUuc2FzN2JkYXQiLCAKICAgIE5VTEwpClZpZXcoYWRhZSkKYGBgCgoqKkltcG9ydCBBRFNMKioKCmBgYHtyfQphZHNsIDwtIHJlYWRfc2FzKCJodHRwczovL2dpdGh1Yi5jb20vZWxvbmcwNTI3L3I0Y3NyL3Jhdy9tYXN0ZXIvZGF0YS1hZGFtL2Fkc2wuc2FzN2JkYXQiLCAKICAgIE5VTEwpClZpZXcoYWRzbCkKYGBgCgoqKlByZXAgRGF0YSoqCgpgYGB7cn0KCmBgYAoKKipBRSBEYXRhIFZpeioqCgpgYGB7cn0KYWRhZSAlPiUKIGZpbHRlcighKEFFUkVMICVpbiUgIiIpKSAlPiUKIGdncGxvdCgpICsKICBhZXMoeCA9IEFFU0VWLCBmaWxsID0gVFJUQSkgKwogIGdlb21fYmFyKCkgKwogIHNjYWxlX2ZpbGxfaHVlKGRpcmVjdGlvbiA9IDEpICsKICB0aGVtZV9taW5pbWFsKCkKCgpgYGAKClRhYmxlCgpgYGB7cn0KCmBgYAo=</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiUiBOb3RlYm9vayIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKKipQYWNrYWdlcyoqCgpgYGB7cn0KbGlicmFyeShoYXZlbikKbGlicmFyeShnZ3Bsb3QyKQpsaWJyYXJ5KGRwbHlyKQpsaWJyYXJ5KGd0KQpsaWJyYXJ5KHBsb3RseSkKbGlicmFyeSh0aWR5cikKYGBgCgoqKkltcG9ydCBBREFFKioKCmBgYHtyfQphZGFlIDwtIHJlYWRfc2FzKCJodHRwczovL2dpdGh1Yi5jb20vZWxvbmcwNTI3L3I0Y3NyL3Jhdy9tYXN0ZXIvZGF0YS1hZGFtL2FkYWUuc2FzN2JkYXQiLCAKICAgIE5VTEwpClZpZXcoYWRhZSkKYGBgCgoqKkltcG9ydCBBRFNMKioKCmBgYHtyfQphZHNsIDwtIHJlYWRfc2FzKCJodHRwczovL2dpdGh1Yi5jb20vZWxvbmcwNTI3L3I0Y3NyL3Jhdy9tYXN0ZXIvZGF0YS1hZGFtL2Fkc2wuc2FzN2JkYXQiLCAKICAgIE5VTEwpClZpZXcoYWRzbCkKYGBgCgoKKipkZWZpbmUgZnVuY3Rpb25zIHVzZWQqKgoKYGBge3J9CmZtdF9udW0gPC0gZnVuY3Rpb24oeCwgZGlnaXRzLCB3aWR0aCA9IGRpZ2l0cyArIDQpIHsKICBmb3JtYXRDKHgsCiAgICBkaWdpdHMgPSBkaWdpdHMsCiAgICBmb3JtYXQgPSAiZiIsCiAgICB3aWR0aCA9IHdpZHRoCiAgKQp9CmBgYAoKKipQcmVwIERhdGEqKgoKYGBge3J9CnBvcCA8LSBhZHNsICU+JQogIGZpbHRlcihTQUZGTCA9PSAiWSIpICU+JQogIHJlbmFtZShUUlRBTiA9IFRSVDAxQU4pICU+JQogIGNvdW50KFRSVEFOLCBuYW1lID0gInRvdCIpCgpwb3AKCmBgYAoKKip0aWR5X2FlKioKYGBge3J9Cgp0aWR5X2FlIDwtIGFkYWUgJT4lCiAgbXV0YXRlKAogICAgYWxsID0gU0FGRkwgPT0gIlkiLAogICAgZHJ1ZyA9IEFFUkVMICVpbiUgYygiUE9TU0lCTEUiLCAiUFJPQkFCTEUiKSwKICAgIHNlciA9IEFFU0VSID09ICJZIiwKICAgIGRydWdfc2VyID0gZHJ1ZyAmIHNlciwKICAgIGRpZSA9IEFFT1VUID09ICJGQVRBTCIKICApICU+JQogIHNlbGVjdChVU1VCSklELCBUUlRBTiwgYWxsLCBkcnVnLCBzZXIsIGRydWdfc2VyLCBkaWUpICU+JQogIHBpdm90X2xvbmdlcihjb2xzID0gYyhhbGwsIGRydWcsIHNlciwgZHJ1Z19zZXIsIGRpZSkpCgp0aWR5X2FlICU+JSBoZWFkKDQpCmBgYAoKCioqV2Ugc3VtbWFyaXplIHRoZSBudW1iZXIgYW5kIHBlcmNlbnRhZ2Ugb2YgcGFydGljaXBhbnRzIHdobyBtZWV0IGVhY2ggQUUgY3JpdGVyaWEuKioKYGBge3J9CmFuYSA8LSB0aWR5X2FlICU+JQogIGZpbHRlcih2YWx1ZSA9PSBUUlVFKSAlPiUKICBncm91cF9ieShUUlRBTiwgbmFtZSkgJT4lCiAgc3VtbWFyaXNlKG4gPSBuX2Rpc3RpbmN0KFVTVUJKSUQpKSAlPiUKICBsZWZ0X2pvaW4ocG9wLCBieSA9ICJUUlRBTiIpICU+JQogIG11dGF0ZSgKICAgIHBjdCA9IGZtdF9udW0obiAvIHRvdCAqIDEwMCwgZGlnaXRzID0gMSksCiAgICBuID0gZm10X251bShuLCBkaWdpdHMgPSAwKSwKICAgIHBjdCA9IHBhc3RlMCgiKCIsIHBjdCwgIikiKQogICkKCmFuYSAlPiUgaGVhZCg0KQoKCmBgYAoKCgoKCioqQUUgRGF0YSBWaXoqKgoKYGBge3J9CmFkYWUgJT4lCiBmaWx0ZXIoIShBRVJFTCAlaW4lICIiKSkgJT4lCiBnZ3Bsb3QoKSArCiAgYWVzKHggPSBBRVNFViwgZmlsbCA9IFRSVEEpICsKICBnZW9tX2JhcigpICsKICBzY2FsZV9maWxsX2h1ZShkaXJlY3Rpb24gPSAxKSArCiAgdGhlbWVfbWluaW1hbCgpCgoKYGBgCgoKYGBge3J9CmFkYWVfdXBkYXRlIDwtIGFkYWUgJT4lCiBmaWx0ZXIoIShUUlRBICVpbiUgIlhhbm9tZWxpbmUgTG93IERvc2UiKSkgJT4lCiBmaWx0ZXIoIShBRVJFTCAlaW4lIGMoIlJFTU9URSIsICIiKSkpICU+JQogZmlsdGVyKFRSVEVNRkwgJWluJSAKICJZIikgCgoKYGBgCgoKClRhYmxlCgpgYGB7cn0KCgoKYGBgCg==</div>
 
 
 
